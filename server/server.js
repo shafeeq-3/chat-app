@@ -29,6 +29,20 @@ mongoose.connect(process.env.MONGODB_URI)
 
 
 
+// Root endpoint for testing
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'GenZ Chat API is running!',
+        version: '1.0.0',
+        endpoints: {
+            auth: '/api/auth',
+            posts: '/api/posts',
+            users: '/api/user',
+            chat: '/api/chat',
+            notifications: '/api/notifications'
+        }
+    });
+});
 
 app.use('/api', routes);
 
@@ -134,3 +148,5 @@ server.listen(port, () => {
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
+// Export for Vercel
+module.exports = app;
