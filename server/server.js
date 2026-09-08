@@ -29,17 +29,57 @@ mongoose.connect(process.env.MONGODB_URI)
 
 
 
-// Root endpoint for testing
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    const healthCheck = {
+        status: 'healthy',
+        message: 'Server is running',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: 'disconnected'
+    };
+
+    // Check MongoDB connection
+    if (mongoose.connection.readyState === 1) {
+        healthCheck.database = 'connected';
+    } else if (mongoose.connection.readyState === 2) {
+        healthCheck.database = 'connecting';
+        healthCheck.status = 'degraded';
+    } else {
+        healthCheck.database = 'disconnected';
+        healthCheck.status = 'unhealthy';
+    }
+
+    const statusCode = healthCheck.status === 'healthy' ? 200 : 503;
+    res.status(statusCode).json(healthCheck);
+});
+
+// Root endpoint
 app.get('/', (req, res) => {
     res.json({ 
-        message: 'GenZ Chat API is running!',
+        message: 'GenZ Chat API',
         version: '1.0.0',
+        status: 'running',
         endpoints: {
-            auth: '/api/auth',
-            posts: '/api/posts',
-            users: '/api/user',
-            chat: '/api/chat',
-            notifications: '/api/notifications'
+            health: '/health',
+            auth: {
+                signup: 'POST /api/auth/signup',
+                login: 'POST /api/auth/login'
+            },
+            posts: {
+                all: 'GET /api/posts/',
+                create: 'POST /api/posts/create',
+                like: 'POST /api/posts/:id/like'
+            },
+            users: {
+                profile: 'GET /api/user/getuser',
+                suggested: 'GET /api/user/suggested/users'
+            },
+            chat: {
+                conversations: 'GET /api/chat/conversations',
+                messages: 'GET /api/chat/messages/:conversationId'
+            },
+            notifications: 'GET /api/notifications/'
         }
     });
 });
